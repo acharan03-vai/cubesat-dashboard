@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CubeSat Mission Control - Global Cloud</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', 'Trebuchet MS', Arial, sans-serif; 
+            background-color: #010206; 
+            color: #e0f2fe; 
+            overflow-x: hidden; 
+            min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        #space-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; }
+        .hud-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 6px 100%;
+        }
+        .container {
+            width: 100%; max-width: 780px; background: rgba(6, 11, 25, 0.75);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 40px rgba(0, 229, 255, 0.2), inset 0 0 20px rgba(0, 240, 255, 0.05);
+            border-radius: 16px; padding: 30px; position: relative;
+        }
+        .container::before, .container::after {
+            content: ''; position: absolute; width: 16px; height: 16px; border-color: #00f0ff; border-style: solid;
+        }
+        .container::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-top-left-radius: 8px; }
+        .container::after { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 8px; }
+        h1 { 
+            font-size: 1.8rem; font-weight: 900; letter-spacing: 3px; text-align: center; color: #00f0ff;
+            text-shadow: 0 0 15px rgba(0, 240, 255, 0.8); margin-bottom: 25px; text-transform: uppercase;
+        }
+        .status-box { 
+            margin-bottom: 25px; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: 800;
+            letter-spacing: 2px; text-align: center; text-transform: uppercase; transition: all 0.3s ease;
+        }
+        .normal { background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+        .warning { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; box-shadow: 0 0 25px rgba(239, 68, 68, 0.6); animation: pulse-red 1s infinite alternate; }
+        .eclipse { background: rgba(139, 92, 246, 0.2); border: 1px solid #8b5cf6; color: #c084fc; box-shadow: 0 0 25px rgba(139, 92, 246, 0.5); }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); } 100% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.9); } }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; }
+        .card { 
+            background: rgba(10, 16, 35, 0.7); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px;
+            padding: 18px 12px; text-align: center; position: relative; overflow: hidden; transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-3px); border-color: rgba(0, 240, 255, 0.7); }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #00f0ff, transparent); }
+        .card h3 { font-size: 0.8rem; color: #7dd3fc; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+        .card p { margin-top: 10px; font-size: 1.6rem; font-weight: 800; color: #ffffff; text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); }
+        .unit { font-size: 0.9rem; color: #38bdf8; margin-left: 2px; }
+    </style>
+</head>
+<body>
+    <canvas id="space-canvas"></canvas>
+    <div class="hud-overlay"></div>
+
+    <div class="container">
+        <h1>CUBESAT GLOBAL MISSION CONTROL</h1>
+        <div id="status-banner" class="status-box normal">SYSTEM NOMINAL</div>
+        <div class="grid">
+            <div class="card"><h3>Pitch</h3><p><span id="pitch">0.0</span><span class="unit">&deg;</span></p></div>
+            <div class="card"><h3>Roll</h3><p><span id="roll">0.0</span><span class="unit">&deg;</span></p></div>
+            <div class="card"><h3>Temp</h3><p><span id="temp">0.0</span><span class="unit">&deg;C</span></p></div>
+            <div class="card"><h3>Humidity</h3><p><span id="hum">0.0</span><span class="unit">%</span></p></div>
+            <div class="card"><h3>Sun Level</h3><p><span id="ldr">0</span></p></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('space-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, stars = [], nebulae = [], meteors = [];
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initSpace();
+        }
+
+        function initSpace() {
+            stars = [];
+            for (let i = 0; i < 220; i++) {
+                stars.push({
+                    x: Math.random() * width, y: Math.random() * height,
+                    radius: Math.random() * 1.5 + 0.3, alpha: Math.random(),
+                    speed: Math.random() * 0.015 + 0.003, flare: Math.random() > 0.85
+                });
+            }
+            nebulae = [
+                { x: width * 0.2, y: height * 0.3, radius: width * 0.35, color: 'rgba(139, 92, 246, 0.12)' },
+                { x: width * 0.8, y: height * 0.2, radius: width * 0.4, color: 'rgba(6, 182, 212, 0.1)' }
+            ];
+        }
+
+        function renderSpace() {
+            ctx.fillStyle = '#010206';
+            ctx.fillRect(0, 0, width, height);
+
+            nebulae.forEach(n => {
+                let grad = ctx.createRadialGradient(n.x, n.y, 10, n.x, n.y, n.radius);
+                grad.addColorStop(0, n.color); grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2); ctx.fill();
+            });
+
+            let earthY = height * 1.65, earthRadius = height * 1.1;
+            let earthGrad = ctx.createRadialGradient(width / 2, earthY, earthRadius * 0.85, width / 2, earthY, earthRadius * 1.05);
+            earthGrad.addColorStop(0, '#001a33'); earthGrad.addColorStop(0.85, '#004488');
+            earthGrad.addColorStop(0.96, '#00f0ff'); earthGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = earthGrad; ctx.beginPath(); ctx.arc(width / 2, earthY, earthRadius, 0, Math.PI * 2); ctx.fill();
+
+            stars.forEach(s => {
+                s.alpha += s.speed;
+                if (s.alpha > 1 || s.alpha < 0) s.speed = -s.speed;
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(s.alpha)})`;
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2); ctx.fill();
+            });
+
+            requestAnimationFrame(renderSpace);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        renderSpace();
+
+        // --- Fetch Live Data from Firebase Cloud REST API ---
+        const FIREBASE_URL = "https://cubesat-telemetry-a99a4-default-rtdb.firebaseio.com/";
+
+        setInterval(() => {
+            fetch(FIREBASE_URL)
+            .then(res => res.json())
+            .then(data => {
+                if(!data) return;
+                document.getElementById('pitch').innerText = data.pitch.toFixed(1);
+                document.getElementById('roll').innerText = data.roll.toFixed(1);
+                document.getElementById('temp').innerText = data.temp.toFixed(1);
+                document.getElementById('hum').innerText = data.hum.toFixed(1);
+                document.getElementById('ldr').innerText = data.ldr;
+
+                let banner = document.getElementById('status-banner');
+                if (data.tumbling) {
+                    banner.innerText = 'CRITICAL ALERT: HIGH TUMBLE RATE';
+                    banner.className = 'status-box warning';
+                } else if (data.eclipse) {
+                    banner.innerText = 'STATE: ECLIPSE MODE (LOW LIGHT)';
+                    banner.className = 'status-box eclipse';
+                } else {
+                    banner.innerText = 'SYSTEM NOMINAL (SUN TRACKING)';
+                    banner.className = 'status-box normal';
+                }
+            }).catch(e => console.log(e));
+        }, 800);
+    </script>
+</body>
+</html>
