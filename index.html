@@ -3,68 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CubeSat Mission Control - Global Cloud</title>
+    <title>CubeSat Global Mission Control</title>
+    
+    <!-- Authentic Aerospace & Mission Control Telemetry Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: 'Segoe UI', 'Trebuchet MS', Arial, sans-serif; 
-            background-color: #010206; 
-            color: #e0f2fe; 
-            overflow-x: hidden; 
-            min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px;
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: #010206;
+            color: #00f0ff;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        #space-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; }
-        .hud-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 3px, 6px 100%;
+
+        /* Fullscreen Space Canvas */
+        #space-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
         }
-        .container {
-            width: 100%; max-width: 780px; background: rgba(6, 11, 25, 0.75);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(0, 240, 255, 0.3);
-            box-shadow: 0 0 40px rgba(0, 229, 255, 0.2), inset 0 0 20px rgba(0, 240, 255, 0.05);
-            border-radius: 16px; padding: 30px; position: relative;
+
+        /* Subtle Telemetry Scanline Layer */
+        .hud-scanlines {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%),
+                        linear-gradient(90deg, rgba(0, 240, 255, 0.02), rgba(0, 0, 0, 0), rgba(0, 240, 255, 0.02));
+            background-size: 100% 4px, 6px 100%;
         }
-        .container::before, .container::after {
-            content: ''; position: absolute; width: 16px; height: 16px; border-color: #00f0ff; border-style: solid;
+
+        /* Glassmorphic Space Command Interface */
+        .hud-container {
+            position: relative;
+            z-index: 3;
+            width: 92%;
+            max-width: 880px;
+            background: rgba(3, 8, 20, 0.72);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.35);
+            border-radius: 14px;
+            padding: 30px;
+            box-shadow: 0 0 60px rgba(0, 229, 255, 0.2), inset 0 0 30px rgba(0, 240, 255, 0.08);
         }
-        .container::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-top-left-radius: 8px; }
-        .container::after { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 8px; }
-        h1 { 
-            font-size: 1.8rem; font-weight: 900; letter-spacing: 3px; text-align: center; color: #00f0ff;
-            text-shadow: 0 0 15px rgba(0, 240, 255, 0.8); margin-bottom: 25px; text-transform: uppercase;
+
+        /* Sci-Fi Target Reticles in Corners */
+        .hud-container::before, .hud-container::after {
+            content: ''; position: absolute; width: 22px; height: 22px;
+            border-color: #00f0ff; border-style: solid;
         }
-        .status-box { 
-            margin-bottom: 25px; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: 800;
-            letter-spacing: 2px; text-align: center; text-transform: uppercase; transition: all 0.3s ease;
+        .hud-container::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-top-left-radius: 6px; }
+        .hud-container::after { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 6px; }
+
+        .hud-header {
+            text-align: center;
+            margin-bottom: 22px;
         }
-        .normal { background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
-        .warning { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; box-shadow: 0 0 25px rgba(239, 68, 68, 0.6); animation: pulse-red 1s infinite alternate; }
-        .eclipse { background: rgba(139, 92, 246, 0.2); border: 1px solid #8b5cf6; color: #c084fc; box-shadow: 0 0 25px rgba(139, 92, 246, 0.5); }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); } 100% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.9); } }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; }
-        .card { 
-            background: rgba(10, 16, 35, 0.7); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px;
-            padding: 18px 12px; text-align: center; position: relative; overflow: hidden; transition: transform 0.2s;
+
+        .hud-header h1 {
+            font-size: 2.1rem;
+            font-weight: 700;
+            letter-spacing: 5px;
+            color: #ffffff;
+            text-shadow: 0 0 12px rgba(0, 240, 255, 0.9), 0 0 25px rgba(0, 240, 255, 0.4);
+            text-transform: uppercase;
         }
-        .card:hover { transform: translateY(-3px); border-color: rgba(0, 240, 255, 0.7); }
-        .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #00f0ff, transparent); }
-        .card h3 { font-size: 0.8rem; color: #7dd3fc; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
-        .card p { margin-top: 10px; font-size: 1.6rem; font-weight: 800; color: #ffffff; text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); }
-        .unit { font-size: 0.9rem; color: #38bdf8; margin-left: 2px; }
+
+        .hud-header .sub-text {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            color: #38bdf8;
+            letter-spacing: 3px;
+            margin-top: 4px;
+            opacity: 0.9;
+        }
+
+        /* Mission State Banner */
+        .status-box {
+            font-family: 'Share Tech Mono', monospace;
+            padding: 13px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.15rem;
+            letter-spacing: 3px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .normal {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid #10b981;
+            color: #34d399;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+        }
+
+        .warning {
+            background: rgba(239, 68, 68, 0.22);
+            border: 1px solid #ef4444;
+            color: #f87171;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
+            animation: pulse-alert 0.8s infinite alternate;
+        }
+
+        .eclipse {
+            background: rgba(168, 85, 247, 0.22);
+            border: 1px solid #a855f7;
+            color: #c084fc;
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.55);
+        }
+
+        @keyframes pulse-alert {
+            0% { opacity: 0.6; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+            100% { opacity: 1; box-shadow: 0 0 35px rgba(239, 68, 68, 0.9); }
+        }
+
+        /* Telemetry Cards */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: rgba(4, 14, 34, 0.85);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            border-radius: 8px;
+            padding: 18px 10px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(0, 240, 255, 0.7);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, #00f0ff, transparent);
+        }
+
+        .card h3 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            color: #7dd3fc;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .card p {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-top: 8px;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+        }
+
+        .unit {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.95rem;
+            color: #00f0ff;
+            margin-left: 2px;
+        }
     </style>
 </head>
 <body>
     <canvas id="space-canvas"></canvas>
-    <div class="hud-overlay"></div>
+    <div class="hud-scanlines"></div>
 
-    <div class="container">
-        <h1>CUBESAT GLOBAL MISSION CONTROL</h1>
+    <div class="hud-container">
+        <div class="hud-header">
+            <h1>CUBESAT MISSION CONTROL</h1>
+            <div class="sub-text">SATELLITE TELEMETRY LINK // ORBITAL STATION</div>
+        </div>
+
         <div id="status-banner" class="status-box normal">SYSTEM NOMINAL</div>
+
         <div class="grid">
             <div class="card"><h3>Pitch</h3><p><span id="pitch">0.0</span><span class="unit">&deg;</span></p></div>
             <div class="card"><h3>Roll</h3><p><span id="roll">0.0</span><span class="unit">&deg;</span></p></div>
@@ -75,73 +207,134 @@
     </div>
 
     <script>
+        // --- High-End Realistic Space Canvas Engine ---
         const canvas = document.getElementById('space-canvas');
         const ctx = canvas.getContext('2d');
-        let width, height, stars = [], nebulae = [], meteors = [];
+        let width, height, stars = [], nebulae = [], orbitPulse = 0;
 
-        function resizeCanvas() {
+        function initCanvas() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
-            initSpace();
-        }
 
-        function initSpace() {
+            // Generate deep volumetric space stars with twinkle and depth
             stars = [];
-            for (let i = 0; i < 220; i++) {
+            for (let i = 0; i < 350; i++) {
                 stars.push({
-                    x: Math.random() * width, y: Math.random() * height,
-                    radius: Math.random() * 1.5 + 0.3, alpha: Math.random(),
-                    speed: Math.random() * 0.015 + 0.003, flare: Math.random() > 0.85
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    radius: Math.random() * 1.6 + 0.2,
+                    alpha: Math.random(),
+                    speed: Math.random() * 0.012 + 0.003,
+                    flare: Math.random() > 0.88
                 });
             }
+
+            // Volumetric Nebula Clouds
             nebulae = [
-                { x: width * 0.2, y: height * 0.3, radius: width * 0.35, color: 'rgba(139, 92, 246, 0.12)' },
-                { x: width * 0.8, y: height * 0.2, radius: width * 0.4, color: 'rgba(6, 182, 212, 0.1)' }
+                { x: width * 0.15, y: height * 0.25, r: width * 0.35, col: 'rgba(99, 102, 241, 0.12)' },
+                { x: width * 0.82, y: height * 0.2, r: width * 0.4, col: 'rgba(6, 182, 212, 0.10)' },
+                { x: width * 0.5, y: height * 0.8, r: width * 0.45, col: 'rgba(168, 85, 247, 0.08)' }
             ];
         }
 
-        function renderSpace() {
-            ctx.fillStyle = '#010206';
+        function drawCrossFlare(cx, cy, size) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(cx - size, cy); ctx.lineTo(cx + size, cy);
+            ctx.moveTo(cx, cy - size); ctx.lineTo(cx, cy + size);
+            ctx.stroke();
+        }
+
+        function renderSpaceEnvironment() {
+            // Deep space pitch black base
+            ctx.fillStyle = '#010308';
             ctx.fillRect(0, 0, width, height);
 
+            // 1. Draw Nebula Gas Clouds
             nebulae.forEach(n => {
-                let grad = ctx.createRadialGradient(n.x, n.y, 10, n.x, n.y, n.radius);
-                grad.addColorStop(0, n.color); grad.addColorStop(1, 'transparent');
-                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2); ctx.fill();
+                let grad = ctx.createRadialGradient(n.x, n.y, 10, n.x, n.y, n.r);
+                grad.addColorStop(0, n.col);
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+                ctx.fill();
             });
 
-            let earthY = height * 1.65, earthRadius = height * 1.1;
-            let earthGrad = ctx.createRadialGradient(width / 2, earthY, earthRadius * 0.85, width / 2, earthY, earthRadius * 1.05);
-            earthGrad.addColorStop(0, '#001a33'); earthGrad.addColorStop(0.85, '#004488');
-            earthGrad.addColorStop(0.96, '#00f0ff'); earthGrad.addColorStop(1, 'transparent');
-            ctx.fillStyle = earthGrad; ctx.beginPath(); ctx.arc(width / 2, earthY, earthRadius, 0, Math.PI * 2); ctx.fill();
-
+            // 2. Multi-depth Starfield Animation
             stars.forEach(s => {
                 s.alpha += s.speed;
                 if (s.alpha > 1 || s.alpha < 0) s.speed = -s.speed;
-                ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(s.alpha)})`;
-                ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2); ctx.fill();
+                let a = Math.abs(s.alpha);
+
+                ctx.fillStyle = `rgba(255, 255, 255, ${a})`;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (s.flare && a > 0.7) {
+                    drawCrossFlare(s.x, s.y, s.radius * 5);
+                }
             });
 
-            requestAnimationFrame(renderSpace);
+            // 3. Realistic Curved Earth Horizon with Atmospheric Scattering
+            let earthCX = width / 2;
+            let earthCY = height * 1.62;
+            let earthRadius = height * 1.08;
+
+            // Rayleigh Atmospheric Glow Layers
+            let atmosphereGrad = ctx.createRadialGradient(
+                earthCX, earthCY, earthRadius * 0.92,
+                earthCX, earthCY, earthRadius * 1.06
+            );
+            atmosphereGrad.addColorStop(0, '#001428');
+            atmosphereGrad.addColorStop(0.7, '#003e7e');
+            atmosphereGrad.addColorStop(0.88, '#00a6ff');
+            atmosphereGrad.addColorStop(0.96, '#00f0ff');
+            atmosphereGrad.addColorStop(1, 'transparent');
+
+            ctx.fillStyle = atmosphereGrad;
+            ctx.beginPath();
+            ctx.arc(earthCX, earthCY, earthRadius * 1.06, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Earth Limb Arc
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(earthCX, earthCY, earthRadius, Math.PI * 1.2, Math.PI * 1.8);
+            ctx.stroke();
+
+            // 4. Orbital Trajectory Vector Path
+            orbitPulse += 0.005;
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([8, 8]);
+            ctx.beginPath();
+            ctx.ellipse(earthCX, earthCY - earthRadius + 60, width * 0.6, 40, -0.05, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset dash
+
+            requestAnimationFrame(renderSpaceEnvironment);
         }
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        renderSpace();
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        renderSpaceEnvironment();
 
-        // --- Fetch Live Data from Firebase Cloud REST API ---
-        const FIREBASE_URL = "https://cubesat-telemetry-a99a4-default-rtdb.firebaseio.com/";
+        // --- Live Firebase Fetching (Untouched logic) ---
+        const FIREBASE_URL = "https://YOUR-FIREBASE-ID.firebaseio.com/telemetry.json";
 
         setInterval(() => {
             fetch(FIREBASE_URL)
             .then(res => res.json())
             .then(data => {
                 if(!data) return;
-                document.getElementById('pitch').innerText = data.pitch.toFixed(1);
-                document.getElementById('roll').innerText = data.roll.toFixed(1);
-                document.getElementById('temp').innerText = data.temp.toFixed(1);
-                document.getElementById('hum').innerText = data.hum.toFixed(1);
+                document.getElementById('pitch').innerText = Number(data.pitch).toFixed(1);
+                document.getElementById('roll').innerText = Number(data.roll).toFixed(1);
+                document.getElementById('temp').innerText = Number(data.temp).toFixed(1);
+                document.getElementById('hum').innerText = Number(data.hum).toFixed(1);
                 document.getElementById('ldr').innerText = data.ldr;
 
                 let banner = document.getElementById('status-banner');
@@ -155,7 +348,7 @@
                     banner.innerText = 'SYSTEM NOMINAL (SUN TRACKING)';
                     banner.className = 'status-box normal';
                 }
-            }).catch(e => console.log(e));
+            }).catch(e => console.log("Firebase Connection Error:", e));
         }, 800);
     </script>
 </body>
