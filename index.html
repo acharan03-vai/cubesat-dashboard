@@ -15,7 +15,7 @@
 
         body {
             font-family: 'Rajdhani', sans-serif;
-            background-color: #000205;
+            background-color: #000000;
             color: #00f0ff;
             overflow: hidden;
             height: 100vh;
@@ -25,21 +25,34 @@
             justify-content: center;
         }
 
-        /* Fullscreen Canvas Space Render */
-        #space-canvas {
+        /* Background Video Layer */
+        #bg-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        /* Darkness & Contrast Overlay (Ensures UI visibility over bright sunbursts) */
+        .video-overlay {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(0, 5, 16, 0.25) 0%, rgba(0, 2, 8, 0.65) 100%);
             z-index: 1;
+            pointer-events: none;
         }
 
-        /* Subtle Telemetry Overlay */
+        /* HUD Scanlines */
         .hud-scanlines {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: 2;
             pointer-events: none;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
             background-size: 100% 4px;
         }
 
@@ -49,19 +62,20 @@
             z-index: 3;
             width: 92%;
             max-width: 880px;
-            background: rgba(2, 8, 20, 0.68);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(0, 240, 255, 0.4);
+            background: rgba(2, 10, 24, 0.82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(0, 240, 255, 0.5);
             border-radius: 14px;
             padding: 30px;
-            box-shadow: 0 0 50px rgba(0, 180, 255, 0.25), inset 0 0 25px rgba(0, 240, 255, 0.1);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.25), inset 0 0 20px rgba(0, 240, 255, 0.12);
         }
 
-        /* HUD Reticle Corners */
+        /* Sci-Fi Target Reticles in Corners */
         .hud-container::before, .hud-container::after {
             content: ''; position: absolute; width: 22px; height: 22px;
             border-color: #00f0ff; border-style: solid;
+            filter: drop-shadow(0 0 4px #00f0ff);
         }
         .hud-container::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-top-left-radius: 6px; }
         .hud-container::after { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 6px; }
@@ -72,62 +86,64 @@
         }
 
         .hud-header h1 {
-            font-size: 2.1rem;
+            font-size: 2.2rem;
             font-weight: 700;
             letter-spacing: 5px;
             color: #ffffff;
-            text-shadow: 0 0 12px rgba(0, 240, 255, 0.9), 0 0 25px rgba(0, 240, 255, 0.4);
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 240, 255, 0.9), 0 0 30px rgba(0, 240, 255, 0.5);
             text-transform: uppercase;
         }
 
         .hud-header .sub-text {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 0.85rem;
+            font-size: 0.88rem;
             color: #38bdf8;
             letter-spacing: 3px;
             margin-top: 4px;
-            opacity: 0.9;
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 10px rgba(56, 189, 248, 0.6);
+            font-weight: bold;
         }
 
         /* Mission State Banner */
         .status-box {
             font-family: 'Share Tech Mono', monospace;
-            padding: 13px;
+            padding: 14px;
             border-radius: 6px;
             text-align: center;
             font-weight: bold;
-            font-size: 1.15rem;
+            font-size: 1.18rem;
             letter-spacing: 3px;
             margin-bottom: 25px;
             text-transform: uppercase;
             transition: all 0.3s ease;
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
         }
 
         .normal {
-            background: rgba(16, 185, 129, 0.18);
-            border: 1px solid #10b981;
+            background: rgba(16, 185, 129, 0.25);
+            border: 1.5px solid #10b981;
             color: #34d399;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
         }
 
         .warning {
-            background: rgba(239, 68, 68, 0.25);
-            border: 1px solid #ef4444;
-            color: #f87171;
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
+            background: rgba(239, 68, 68, 0.32);
+            border: 1.5px solid #ef4444;
+            color: #ff8888;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.85);
             animation: pulse-alert 0.8s infinite alternate;
         }
 
         .eclipse {
-            background: rgba(168, 85, 247, 0.25);
-            border: 1px solid #a855f7;
-            color: #c084fc;
-            box-shadow: 0 0 25px rgba(168, 85, 247, 0.55);
+            background: rgba(168, 85, 247, 0.32);
+            border: 1.5px solid #a855f7;
+            color: #e9d5ff;
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.6);
         }
 
         @keyframes pulse-alert {
-            0% { opacity: 0.6; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
-            100% { opacity: 1; box-shadow: 0 0 35px rgba(239, 68, 68, 0.9); }
+            0% { opacity: 0.7; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+            100% { opacity: 1; box-shadow: 0 0 35px rgba(239, 68, 68, 0.95); }
         }
 
         /* Telemetry Cards */
@@ -138,18 +154,20 @@
         }
 
         .card {
-            background: rgba(4, 14, 32, 0.82);
-            border: 1px solid rgba(0, 240, 255, 0.3);
+            background: rgba(3, 14, 33, 0.88);
+            border: 1px solid rgba(0, 240, 255, 0.4);
             border-radius: 8px;
             padding: 18px 10px;
             text-align: center;
             position: relative;
-            transition: transform 0.2s, border-color 0.2s;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
         .card:hover {
             transform: translateY(-2px);
-            border-color: rgba(0, 240, 255, 0.8);
+            border-color: rgba(0, 240, 255, 0.9);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
         }
 
         .card::before {
@@ -161,19 +179,20 @@
 
         .card h3 {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 0.82rem;
-            color: #7dd3fc;
+            font-size: 0.85rem;
+            color: #a5f3fc;
             letter-spacing: 2px;
             text-transform: uppercase;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
         }
 
         .card p {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 1.8rem;
+            font-size: 1.85rem;
             font-weight: 700;
             color: #ffffff;
             margin-top: 8px;
-            text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 240, 255, 0.8);
         }
 
         .unit {
@@ -181,13 +200,22 @@
             font-size: 0.95rem;
             color: #00f0ff;
             margin-left: 2px;
+            text-shadow: 0 0 6px rgba(0, 240, 255, 0.7);
         }
     </style>
 </head>
 <body>
-    <canvas id="space-canvas"></canvas>
+    <!-- Looping Space Background Video -->
+    <video id="bg-video" autoplay loop muted playsinline>
+        <source src="background.mp4" type="video/mp4">
+        Your browser does not support HTML5 video.
+    </video>
+
+    <!-- UI Readability Layer -->
+    <div class="video-overlay"></div>
     <div class="hud-scanlines"></div>
 
+    <!-- Telemetry Interface -->
     <div class="hud-container">
         <div class="hud-header">
             <h1>CUBESAT MISSION CONTROL</h1>
@@ -206,139 +234,7 @@
     </div>
 
     <script>
-        // --- Photorealistic Earth & Milky Way Canvas Engine ---
-        const canvas = document.getElementById('space-canvas');
-        const ctx = canvas.getContext('2d');
-        let width, height, stars = [];
-
-        function initCanvas() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-
-            // Generate high-density star field tailored to galactic plane concentration
-            stars = [];
-            const totalStars = 700;
-            for (let i = 0; i < totalStars; i++) {
-                stars.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height * 0.75, // Concentrated above horizon
-                    radius: Math.random() * 1.3 + 0.2,
-                    alpha: Math.random() * 0.9 + 0.1,
-                    speed: Math.random() * 0.008 + 0.002
-                });
-            }
-        }
-
-        function drawMilkyWayArc() {
-            ctx.save();
-            
-            // Arching Milky Way core trajectory across top canvas
-            ctx.translate(width * 0.5, height * 0.15);
-            ctx.rotate(-0.32); // Slanted arc
-
-            // 1. Bright Golden Galactic Bulge Glow
-            let coreGlow = ctx.createRadialGradient(0, 0, 10, 0, 0, width * 0.45);
-            coreGlow.addColorStop(0, 'rgba(255, 220, 170, 0.42)');
-            coreGlow.addColorStop(0.2, 'rgba(230, 180, 130, 0.28)');
-            coreGlow.addColorStop(0.5, 'rgba(120, 80, 160, 0.15)');
-            coreGlow.addColorStop(1, 'transparent');
-
-            ctx.fillStyle = coreGlow;
-            ctx.beginPath();
-            ctx.ellipse(0, 0, width * 0.75, height * 0.22, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 2. Dark Dust Lanes Overlay
-            let dustGrad = ctx.createLinearGradient(-width * 0.5, 0, width * 0.5, 0);
-            dustGrad.addColorStop(0, 'transparent');
-            dustGrad.addColorStop(0.4, 'rgba(5, 2, 10, 0.45)');
-            dustGrad.addColorStop(0.6, 'rgba(8, 3, 12, 0.5)');
-            dustGrad.addColorStop(1, 'transparent');
-
-            ctx.fillStyle = dustGrad;
-            ctx.beginPath();
-            ctx.ellipse(0, 10, width * 0.7, height * 0.08, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
-        }
-
-        function drawEarthHorizon() {
-            ctx.save();
-
-            let earthCX = width / 2;
-            let earthCY = height * 2.38; // Deep center for natural curved horizon
-            let earthRadius = height * 2.05;
-
-            // 1. Earth Body Gradient (Dark Ocean with Cloud Formations)
-            let earthGrad = ctx.createLinearGradient(0, height * 0.5, 0, height);
-            earthGrad.addColorStop(0, '#061a33');
-            earthGrad.addColorStop(0.35, '#0b2b4d');
-            earthGrad.addColorStop(0.7, '#020d1c');
-            earthGrad.addColorStop(1, '#00050d');
-
-            ctx.fillStyle = earthGrad;
-            ctx.beginPath();
-            ctx.arc(earthCX, earthCY, earthRadius, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 2. Horizon Sun Specular Highlight Glint
-            let sunGlow = ctx.createRadialGradient(
-                width * 0.52, height * 0.63, 10,
-                width * 0.52, height * 0.63, width * 0.45
-            );
-            sunGlow.addColorStop(0, 'rgba(255, 235, 190, 0.6)');
-            sunGlow.addColorStop(0.18, 'rgba(255, 180, 100, 0.3)');
-            sunGlow.addColorStop(0.45, 'rgba(0, 160, 255, 0.15)');
-            sunGlow.addColorStop(1, 'transparent');
-
-            ctx.fillStyle = sunGlow;
-            ctx.beginPath();
-            ctx.arc(earthCX, earthCY, earthRadius + 15, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 3. Electric Blue Rayleigh Atmosphere Ring
-            ctx.strokeStyle = 'rgba(56, 189, 248, 0.9)';
-            ctx.lineWidth = 3.5;
-            ctx.shadowColor = '#00f0ff';
-            ctx.shadowBlur = 18;
-            ctx.beginPath();
-            ctx.arc(earthCX, earthCY, earthRadius, Math.PI * 1.28, Math.PI * 1.72);
-            ctx.stroke();
-
-            ctx.restore();
-        }
-
-        function renderSpaceEnvironment() {
-            // Pitch Black Deep Space Background
-            ctx.fillStyle = '#010205';
-            ctx.fillRect(0, 0, width, height);
-
-            // 1. Render Galactic Arch
-            drawMilkyWayArc();
-
-            // 2. Render Stars with subtle twinkle
-            stars.forEach(s => {
-                s.alpha += s.speed;
-                if (s.alpha > 1 || s.alpha < 0.1) s.speed = -s.speed;
-
-                ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(s.alpha)})`;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            // 3. Render Earth Horizon with Sunlight Glint
-            drawEarthHorizon();
-
-            requestAnimationFrame(renderSpaceEnvironment);
-        }
-
-        window.addEventListener('resize', initCanvas);
-        initCanvas();
-        renderSpaceEnvironment();
-
-        // --- Live Firebase Fetching (Untouched logic) ---
+        // Live Firebase Telemetry Fetching Logic
         const FIREBASE_URL = "https://YOUR-FIREBASE-ID.firebaseio.com/telemetry.json";
 
         setInterval(() => {
