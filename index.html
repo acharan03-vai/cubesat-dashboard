@@ -232,14 +232,16 @@
         </div>
     </div>
 
-    <script>
-        const FIREBASE_URL = "https://cubesat-telemetry-a99a4-default-rtdb.firebaseio.com/";
+<script>
+        // Appended telemetry.json to align with the ESP32 database path
+        const FIREBASE_URL = "https://cubesat-telemetry-a99a4-default-rtdb.firebaseio.com/telemetry.json";
 
         setInterval(() => {
             fetch(FIREBASE_URL)
             .then(res => res.json())
             .then(data => {
-                if(!data) return;
+                if (!data) return;
+
                 document.getElementById('pitch').innerText = Number(data.pitch || 0).toFixed(1);
                 document.getElementById('roll').innerText = Number(data.roll || 0).toFixed(1);
                 document.getElementById('temp').innerText = Number(data.temp || 0).toFixed(1);
@@ -247,10 +249,15 @@
                 document.getElementById('ldr').innerText = data.ldr ?? 0;
 
                 let banner = document.getElementById('status-banner');
-                if (data.tumbling) {
+
+                // Handles boolean check for string ("true") or boolean (true)
+                const isTumbling = (data.tumbling === true || data.tumbling === "true");
+                const isEclipse = (data.eclipse === true || data.eclipse === "true");
+
+                if (isTumbling) {
                     banner.innerText = 'CRITICAL ALERT: HIGH TUMBLE RATE';
                     banner.className = 'status-box warning';
-                } else if (data.eclipse) {
+                } else if (isEclipse) {
                     banner.innerText = 'STATE: ECLIPSE MODE (LOW LIGHT)';
                     banner.className = 'status-box eclipse';
                 } else {
