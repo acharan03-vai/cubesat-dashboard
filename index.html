@@ -26,16 +26,18 @@
         }
 
         /* High-Clarity Unfiltered Background Video */
-        #bg-video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 0;
-            filter: none;
-        }
+     #bg-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    transform: translateZ(0); /* Forces GPU layer rendering */
+    will-change: transform;
+}
+        
 
         /* Glassmorphic Space Command Interface */
         .hud-container {
