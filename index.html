@@ -25,7 +25,7 @@
             justify-content: center;
         }
 
-        /* Background Video Layer */
+        /* High-Clarity Unfiltered Background Video */
         #bg-video {
             position: absolute;
             top: 0;
@@ -34,51 +34,52 @@
             height: 100%;
             object-fit: cover;
             z-index: 0;
-        }
-
-        /* Darkness & Contrast Overlay (Ensures UI visibility over bright sunbursts) */
-        .video-overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: radial-gradient(circle, rgba(0, 5, 16, 0.25) 0%, rgba(0, 2, 8, 0.65) 100%);
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        /* HUD Scanlines */
-        .hud-scanlines {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 2;
-            pointer-events: none;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
-            background-size: 100% 4px;
+            filter: none;
         }
 
         /* Glassmorphic Space Command Interface */
         .hud-container {
             position: relative;
-            z-index: 3;
+            z-index: 2;
             width: 92%;
             max-width: 880px;
-            background: rgba(2, 10, 24, 0.82);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
+            background: rgba(2, 10, 22, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(0, 240, 255, 0.5);
             border-radius: 14px;
             padding: 30px;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.25), inset 0 0 20px rgba(0, 240, 255, 0.12);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 240, 255, 0.2);
+            overflow: hidden;
         }
 
-        /* Sci-Fi Target Reticles in Corners */
-        .hud-container::before, .hud-container::after {
-            content: ''; position: absolute; width: 22px; height: 22px;
-            border-color: #00f0ff; border-style: solid;
-            filter: drop-shadow(0 0 4px #00f0ff);
+        /* Scanlines restricted only inside HUD box */
+        .hud-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 1;
         }
-        .hud-container::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-top-left-radius: 6px; }
-        .hud-container::after { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 6px; }
+
+        /* HUD Target Reticles */
+        .corner-tl, .corner-br {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-color: #00f0ff;
+            border-style: solid;
+            z-index: 3;
+        }
+        .corner-tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-top-left-radius: 6px; }
+        .corner-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 6px; }
+
+        .hud-content {
+            position: relative;
+            z-index: 2;
+        }
 
         .hud-header {
             text-align: center;
@@ -90,7 +91,7 @@
             font-weight: 700;
             letter-spacing: 5px;
             color: #ffffff;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 240, 255, 0.9), 0 0 30px rgba(0, 240, 255, 0.5);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.9), 0 0 25px rgba(0, 240, 255, 0.4);
             text-transform: uppercase;
         }
 
@@ -100,7 +101,6 @@
             color: #38bdf8;
             letter-spacing: 3px;
             margin-top: 4px;
-            text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 10px rgba(56, 189, 248, 0.6);
             font-weight: bold;
         }
 
@@ -116,14 +116,13 @@
             margin-bottom: 25px;
             text-transform: uppercase;
             transition: all 0.3s ease;
-            text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
         }
 
         .normal {
             background: rgba(16, 185, 129, 0.25);
             border: 1.5px solid #10b981;
             color: #34d399;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
         }
 
         .warning {
@@ -154,14 +153,13 @@
         }
 
         .card {
-            background: rgba(3, 14, 33, 0.88);
+            background: rgba(3, 14, 33, 0.92);
             border: 1px solid rgba(0, 240, 255, 0.4);
             border-radius: 8px;
             padding: 18px 10px;
             text-align: center;
             position: relative;
             transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
         .card:hover {
@@ -183,7 +181,6 @@
             color: #a5f3fc;
             letter-spacing: 2px;
             text-transform: uppercase;
-            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
         }
 
         .card p {
@@ -192,7 +189,7 @@
             font-weight: 700;
             color: #ffffff;
             margin-top: 8px;
-            text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 240, 255, 0.8);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
         }
 
         .unit {
@@ -200,41 +197,40 @@
             font-size: 0.95rem;
             color: #00f0ff;
             margin-left: 2px;
-            text-shadow: 0 0 6px rgba(0, 240, 255, 0.7);
         }
     </style>
 </head>
 <body>
-    <!-- Looping Space Background Video -->
+    <!-- Clean Unfiltered Looping Video -->
     <video id="bg-video" autoplay loop muted playsinline>
         <source src="background.mp4" type="video/mp4">
         Your browser does not support HTML5 video.
     </video>
 
-    <!-- UI Readability Layer -->
-    <div class="video-overlay"></div>
-    <div class="hud-scanlines"></div>
-
-    <!-- Telemetry Interface -->
+    <!-- Main Telemetry Interface -->
     <div class="hud-container">
-        <div class="hud-header">
-            <h1>CUBESAT MISSION CONTROL</h1>
-            <div class="sub-text">SATELLITE TELEMETRY LINK // ORBITAL STATION</div>
-        </div>
+        <div class="corner-tl"></div>
+        <div class="corner-br"></div>
 
-        <div id="status-banner" class="status-box normal">SYSTEM NOMINAL</div>
+        <div class="hud-content">
+            <div class="hud-header">
+                <h1>CUBESAT MISSION CONTROL</h1>
+                <div class="sub-text">SATELLITE TELEMETRY LINK // ORBITAL STATION</div>
+            </div>
 
-        <div class="grid">
-            <div class="card"><h3>Pitch</h3><p><span id="pitch">0.0</span><span class="unit">&deg;</span></p></div>
-            <div class="card"><h3>Roll</h3><p><span id="roll">0.0</span><span class="unit">&deg;</span></p></div>
-            <div class="card"><h3>Temp</h3><p><span id="temp">0.0</span><span class="unit">&deg;C</span></p></div>
-            <div class="card"><h3>Humidity</h3><p><span id="hum">0.0</span><span class="unit">%</span></p></div>
-            <div class="card"><h3>Sun Level</h3><p><span id="ldr">0</span></p></div>
+            <div id="status-banner" class="status-box normal">SYSTEM NOMINAL</div>
+
+            <div class="grid">
+                <div class="card"><h3>Pitch</h3><p><span id="pitch">0.0</span><span class="unit">&deg;</span></p></div>
+                <div class="card"><h3>Roll</h3><p><span id="roll">0.0</span><span class="unit">&deg;</span></p></div>
+                <div class="card"><h3>Temp</h3><p><span id="temp">0.0</span><span class="unit">&deg;C</span></p></div>
+                <div class="card"><h3>Humidity</h3><p><span id="hum">0.0</span><span class="unit">%</span></p></div>
+                <div class="card"><h3>Sun Level</h3><p><span id="ldr">0</span></p></div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Live Firebase Telemetry Fetching Logic
         const FIREBASE_URL = "https://YOUR-FIREBASE-ID.firebaseio.com/telemetry.json";
 
         setInterval(() => {
