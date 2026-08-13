@@ -5,19 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CubeSat Global Mission Control</title>
     
+    <!-- Authentic Aerospace & Mission Control Telemetry Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
-    <!-- Three.js Library for 3D Procedural Background -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Rajdhani', sans-serif;
-            background-color: #020617;
+            background-color: #000000;
             color: #00f0ff;
             overflow: hidden;
             height: 100vh;
@@ -27,41 +25,52 @@
             justify-content: center;
         }
 
-        /* Fullscreen WebGL Canvas replacing the video */
-        #webgl-bg {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0;
-        }
+        /* High-Clarity Unfiltered Background Video */
+     #bg-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    transform: translateZ(0); /* Forces GPU layer rendering */
+    will-change: transform;
+}
+        
 
+        /* Glassmorphic Space Command Interface */
         .hud-container {
             position: relative;
             z-index: 2;
-            width: 94%;
-            max-width: 950px;
-            background: rgba(2, 10, 22, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            width: 92%;
+            max-width: 880px;
+            background: rgba(2, 10, 22, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(0, 240, 255, 0.5);
             border-radius: 14px;
-            padding: 25px;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), 0 0 25px rgba(0, 240, 255, 0.2);
+            padding: 30px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 240, 255, 0.2);
             overflow: hidden;
         }
 
+        /* Scanlines restricted only inside HUD box */
         .hud-container::before {
             content: '';
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
             background-size: 100% 4px;
             pointer-events: none;
             z-index: 1;
         }
 
+        /* HUD Target Reticles */
         .corner-tl, .corner-br {
             position: absolute;
-            width: 22px; height: 22px;
+            width: 22px;
+            height: 22px;
             border-color: #00f0ff;
             border-style: solid;
             z-index: 3;
@@ -69,94 +78,108 @@
         .corner-tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-top-left-radius: 6px; }
         .corner-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 6px; }
 
-        .hud-content { position: relative; z-index: 2; }
+        .hud-content {
+            position: relative;
+            z-index: 2;
+        }
 
         .hud-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(0, 240, 255, 0.3);
-            padding-bottom: 12px;
-            margin-bottom: 18px;
+            text-align: center;
+            margin-bottom: 22px;
         }
 
         .hud-header h1 {
-            font-size: 1.8rem;
+            font-size: 2.2rem;
             font-weight: 700;
-            letter-spacing: 4px;
+            letter-spacing: 5px;
             color: #ffffff;
-            text-shadow: 0 0 10px rgba(0, 240, 255, 0.9);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.9), 0 0 25px rgba(0, 240, 255, 0.4);
             text-transform: uppercase;
         }
 
-        .hud-header .clock-box {
+        .hud-header .sub-text {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             color: #38bdf8;
-            letter-spacing: 2px;
-            text-align: right;
+            letter-spacing: 3px;
+            margin-top: 4px;
+            font-weight: bold;
         }
 
+        /* Mission State Banner */
         .status-box {
             font-family: 'Share Tech Mono', monospace;
-            padding: 12px;
+            padding: 14px;
             border-radius: 6px;
             text-align: center;
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 1.18rem;
             letter-spacing: 3px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             text-transform: uppercase;
             transition: all 0.3s ease;
         }
 
         .normal {
-            background: rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.25);
             border: 1.5px solid #10b981;
             color: #34d399;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
         }
 
         .warning {
-            background: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.32);
             border: 1.5px solid #ef4444;
             color: #ff8888;
             box-shadow: 0 0 30px rgba(239, 68, 68, 0.85);
-            animation: pulse-alert 0.6s infinite alternate;
+            animation: pulse-alert 0.8s infinite alternate;
         }
 
         .eclipse {
-            background: rgba(168, 85, 247, 0.3);
+            background: rgba(168, 85, 247, 0.32);
             border: 1.5px solid #a855f7;
             color: #e9d5ff;
             box-shadow: 0 0 25px rgba(168, 85, 247, 0.6);
         }
 
         @keyframes pulse-alert {
-            0% { opacity: 0.6; transform: scale(0.99); }
-            100% { opacity: 1; transform: scale(1.01); }
+            0% { opacity: 0.7; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+            100% { opacity: 1; box-shadow: 0 0 35px rgba(239, 68, 68, 0.95); }
         }
 
+        /* Telemetry Cards */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 14px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+            gap: 16px;
         }
 
         .card {
             background: rgba(3, 14, 33, 0.92);
             border: 1px solid rgba(0, 240, 255, 0.4);
             border-radius: 8px;
-            padding: 14px 8px;
+            padding: 18px 10px;
             text-align: center;
             position: relative;
-            transition: transform 0.2s, border-color 0.2s;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(0, 240, 255, 0.9);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, #00f0ff, transparent);
         }
 
         .card h3 {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: #a5f3fc;
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -164,61 +187,37 @@
 
         .card p {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 1.6rem;
+            font-size: 1.85rem;
             font-weight: 700;
             color: #ffffff;
-            margin-top: 6px;
+            margin-top: 8px;
             text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
         }
 
-        .unit { font-size: 0.85rem; color: #00f0ff; margin-left: 2px; }
-
-        .visualizer-row {
-            display: flex;
-            gap: 15px;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(0, 240, 255, 0.25);
-            border-radius: 8px;
-            padding: 12px;
-        }
-
-        .viz-box { flex: 1; text-align: center; }
-        .viz-title {
+        .unit {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 0.75rem;
-            color: #38bdf8;
-            letter-spacing: 2px;
-            margin-bottom: 6px;
-        }
-
-        canvas.hud-gauge {
-            background: #000;
-            border: 1px solid rgba(0, 240, 255, 0.4);
-            border-radius: 50%;
+            font-size: 0.95rem;
+            color: #00f0ff;
+            margin-left: 2px;
         }
     </style>
 </head>
 <body>
+    <!-- Clean Unfiltered Looping Video -->
+    <video id="bg-video" autoplay loop muted playsinline>
+        <source src="background1.mp4" type="video/mp4">
+        Your browser does not support HTML5 video.
+    </video>
 
-    <!-- Native HD WebGL Procedural Background -->
-    <canvas id="webgl-bg"></canvas>
-
+    <!-- Main Telemetry Interface -->
     <div class="hud-container">
         <div class="corner-tl"></div>
         <div class="corner-br"></div>
 
         <div class="hud-content">
             <div class="hud-header">
-                <div>
-                    <h1>CUBESAT MISSION CONTROL</h1>
-                    <div style="font-family:'Share Tech Mono'; font-size:0.8rem; color:#38bdf8; letter-spacing:2px;">ORBITAL TELEMETRY LINK // ESP32 GROUND STATION</div>
-                </div>
-                <div class="clock-box">
-                    <div id="utc-clock">00:00:00 UTC</div>
-                    <div id="link-status" style="color:#10b981;">LINK ACTIVE</div>
-                </div>
+                <h1>CUBESAT MISSION CONTROL</h1>
+                <div class="sub-text">SATELLITE TELEMETRY LINK // ORBITAL STATION</div>
             </div>
 
             <div id="status-banner" class="status-box normal">SYSTEM NOMINAL</div>
@@ -230,194 +229,28 @@
                 <div class="card"><h3>Humidity</h3><p><span id="hum">0.0</span><span class="unit">%</span></p></div>
                 <div class="card"><h3>Sun Level</h3><p><span id="ldr">0</span></p></div>
             </div>
-
-            <div class="visualizer-row">
-                <div class="viz-box">
-                    <div class="viz-title">ATTITUDE INDICATOR (GYRO)</div>
-                    <canvas id="horizonCanvas" class="hud-gauge" width="100" height="100"></canvas>
-                </div>
-                <div class="viz-box">
-                    <div class="viz-title">RADAR SWEEP</div>
-                    <canvas id="radarCanvas" class="hud-gauge" width="100" height="100"></canvas>
-                </div>
-            </div>
         </div>
     </div>
 
-    <script>
-        // --- 1. THREE.JS 3D PROCEDURAL EARTH & SATELLITE MESH BACKGROUND ---
-        const bgCanvas = document.getElementById('webgl-bg');
-        const renderer = new THREE.WebGLRenderer({ canvas: bgCanvas, antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 0, 8);
-
-        // 3D Earth Globe Wireframe Mesh
-        const earthGeo = new THREE.SphereGeometry(2.5, 32, 32);
-        const earthMat = new THREE.MeshBasicMaterial({
-            color: 0x0284c7,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.35
-        });
-        const earth = new THREE.Mesh(earthGeo, earthMat);
-        scene.add(earth);
-
-        // Orbiting Satellite Constellation Nodes
-        const satCount = 18;
-        const satGroup = new THREE.Group();
-        const satPositions = [];
-
-        for (let i = 0; i < satCount; i++) {
-            const satGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-            const satMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-            const sat = new THREE.Mesh(satGeo, satMat);
-
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos((Math.random() * 2) - 1);
-            const radius = 3.2 + Math.random() * 0.4;
-
-            sat.position.set(
-                radius * Math.sin(phi) * Math.cos(theta),
-                radius * Math.sin(phi) * Math.sin(theta),
-                radius * Math.cos(phi)
-            );
-
-            satPositions.push(sat.position);
-            satGroup.add(sat);
-        }
-        scene.add(satGroup);
-
-        // Constellation Network Mesh Lines
-        const lineMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.25 });
-        const lineGeo = new THREE.BufferGeometry();
-        const linePositions = [];
-
-        for (let i = 0; i < satCount; i++) {
-            for (let j = i + 1; j < satCount; j++) {
-                if (satPositions[i].distanceTo(satPositions[j]) < 2.5) {
-                    linePositions.push(satPositions[i].x, satPositions[i].y, satPositions[i].z);
-                    linePositions.push(satPositions[j].x, satPositions[j].y, satPositions[j].z);
-                }
-            }
-        }
-        lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-        const networkLines = new THREE.LineSegments(lineGeo, lineMat);
-        satGroup.add(networkLines);
-
-        // Starfield Particles
-        const starGeo = new THREE.BufferGeometry();
-        const starCount = 800;
-        const starPos = new Float32Array(starCount * 3);
-        for(let i = 0; i < starCount * 3; i++) {
-            starPos[i] = (Math.random() - 0.5) * 40;
-        }
-        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-        const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05 });
-        const stars = new THREE.Points(starGeo, starMat);
-        scene.add(stars);
-
-        // Render Loop for Background Animation
-        function animateBG() {
-            requestAnimationFrame(animateBG);
-            earth.rotation.y += 0.0015;
-            satGroup.rotation.y += 0.002;
-            satGroup.rotation.x += 0.001;
-            renderer.render(scene, camera);
-        }
-        animateBG();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // --- 2. TELEMETRY DASHBOARD LOGIC ---
+<script>
+        // Appended telemetry.json to align with the ESP32 database path
         const FIREBASE_URL = "https://cubesat-telemetry-a99a4-default-rtdb.firebaseio.com/telemetry.json";
-        
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('utc-clock').innerText = now.toUTCString().split(' ')[4] + " UTC";
-        }, 1000);
 
-        // Artificial Horizon ADI Gauge
-        const hCanvas = document.getElementById('horizonCanvas');
-        const hCtx = hCanvas.getContext('2d');
-        function drawHorizon(pitch, roll) {
-            hCtx.clearRect(0, 0, 100, 100);
-            hCtx.save();
-            hCtx.translate(50, 50);
-            hCtx.rotate((roll * Math.PI) / 180);
-
-            hCtx.fillStyle = '#0284c7';
-            hCtx.fillRect(-50, -50 + pitch, 100, 50);
-            hCtx.fillStyle = '#b45309';
-            hCtx.fillRect(-50, pitch, 100, 50);
-
-            hCtx.strokeStyle = '#ffffff';
-            hCtx.lineWidth = 2;
-            hCtx.beginPath();
-            hCtx.moveTo(-50, pitch);
-            hCtx.lineTo(50, pitch);
-            hCtx.stroke();
-            hCtx.restore();
-
-            hCtx.strokeStyle = '#00f0ff';
-            hCtx.lineWidth = 2;
-            hCtx.beginPath();
-            hCtx.moveTo(35, 50); hCtx.lineTo(65, 50);
-            hCtx.moveTo(50, 35); hCtx.lineTo(50, 65);
-            hCtx.stroke();
-        }
-
-        // Radar Sweep
-        const rCanvas = document.getElementById('radarCanvas');
-        const rCtx = rCanvas.getContext('2d');
-        let angle = 0;
-        function drawRadar() {
-            rCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            rCtx.fillRect(0, 0, 100, 100);
-
-            rCtx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
-            rCtx.beginPath();
-            rCtx.arc(50, 50, 20, 0, Math.PI * 2);
-            rCtx.arc(50, 50, 40, 0, Math.PI * 2);
-            rCtx.stroke();
-
-            rCtx.strokeStyle = '#00f0ff';
-            rCtx.beginPath();
-            rCtx.moveTo(50, 50);
-            rCtx.lineTo(50 + 45 * Math.cos(angle), 50 + 45 * Math.sin(angle));
-            rCtx.stroke();
-
-            angle += 0.05;
-            requestAnimationFrame(drawRadar);
-        }
-        drawRadar();
-
-        // Firebase Sync Loop
         setInterval(() => {
             fetch(FIREBASE_URL)
             .then(res => res.json())
             .then(data => {
                 if (!data) return;
 
-                const pitchVal = Number(data.pitch || 0);
-                const rollVal = Number(data.roll || 0);
-
-                document.getElementById('pitch').innerText = pitchVal.toFixed(1);
-                document.getElementById('roll').innerText = rollVal.toFixed(1);
+                document.getElementById('pitch').innerText = Number(data.pitch || 0).toFixed(1);
+                document.getElementById('roll').innerText = Number(data.roll || 0).toFixed(1);
                 document.getElementById('temp').innerText = Number(data.temp || 0).toFixed(1);
                 document.getElementById('hum').innerText = Number(data.hum || 0).toFixed(1);
                 document.getElementById('ldr').innerText = data.ldr ?? 0;
 
-                drawHorizon(pitchVal, rollVal);
-
                 let banner = document.getElementById('status-banner');
+
+                // Handles boolean check for string ("true") or boolean (true)
                 const isTumbling = (data.tumbling === true || data.tumbling === "true");
                 const isEclipse = (data.eclipse === true || data.eclipse === "true");
 
@@ -431,10 +264,7 @@
                     banner.innerText = 'SYSTEM NOMINAL (SUN TRACKING)';
                     banner.className = 'status-box normal';
                 }
-            }).catch(e => {
-                document.getElementById('link-status').innerText = "LINK DISCONNECTED";
-                document.getElementById('link-status').style.color = "#ef4444";
-            });
+            }).catch(e => console.log("Firebase Connection Error:", e));
         }, 800);
     </script>
 </body>
