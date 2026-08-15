@@ -26,18 +26,17 @@
         }
 
         /* High-Clarity Unfiltered Background Video */
-     #bg-video {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 0;
-    transform: translateZ(0); /* Forces GPU layer rendering */
-    will-change: transform;
-}
-        
+        #bg-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            transform: translateZ(0); /* Forces GPU layer rendering */
+            will-change: transform;
+        }
 
         /* Glassmorphic Space Command Interface */
         .hud-container {
@@ -84,6 +83,7 @@
         }
 
         .hud-header {
+            position: relative;
             text-align: center;
             margin-bottom: 22px;
         }
@@ -103,6 +103,32 @@
             color: #38bdf8;
             letter-spacing: 3px;
             margin-top: 4px;
+            font-weight: bold;
+        }
+
+        /* Top-Right Header Clock Widget */
+        .time-widget {
+            position: absolute;
+            right: 0;
+            top: 4px;
+            text-align: right;
+        }
+
+        .time-widget .time-val {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #00f0ff;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+            letter-spacing: 2px;
+        }
+
+        .time-widget .time-sub {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            color: #38bdf8;
+            letter-spacing: 2px;
+            margin-top: 2px;
             font-weight: bold;
         }
 
@@ -218,6 +244,12 @@
             <div class="hud-header">
                 <h1>CUBESAT DASHBOARD</h1>
                 <div class="sub-text">SATELLITE TELEMETRY LINK</div>
+                
+                <!-- Time Widget placed in the top right area -->
+                <div class="time-widget">
+                    <div class="time-val" id="time">--:--:--</div>
+                    <div class="time-sub">MISSION TIME</div>
+                </div>
             </div>
 
             <div id="status-banner" class="status-box normal">SYSTEM NOMINAL</div>
@@ -232,8 +264,7 @@
         </div>
     </div>
 
-<script>
-        // Appended telemetry.json to align with the ESP32 database path
+    <script>
         const FIREBASE_URL = "https://cubesat-telemetry-a99a4-default-rtdb.firebaseio.com/telemetry.json";
 
         setInterval(() => {
@@ -248,9 +279,19 @@
                 document.getElementById('hum').innerText = Number(data.hum || 0).toFixed(1);
                 document.getElementById('ldr').innerText = data.ldr ?? 0;
 
+                // Time logic: Uses telemetry time if provided, otherwise uses ground station clock
+                if (data.time) {
+                    document.getElementById('time').innerText = data.time;
+                } else if (data.timestamp) {
+                    const date = new Date(data.timestamp);
+                    document.getElementById('time').innerText = date.toLocaleTimeString();
+                } else {
+                    const now = new Date();
+                    document.getElementById('time').innerText = now.toLocaleTimeString();
+                }
+
                 let banner = document.getElementById('status-banner');
 
-                // Handles boolean check for string ("true") or boolean (true)
                 const isTumbling = (data.tumbling === true || data.tumbling === "true");
                 const isEclipse = (data.eclipse === true || data.eclipse === "true");
 
